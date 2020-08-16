@@ -1,0 +1,7 @@
+####
+get http://localhost:3333/
+Content-Type: application/json
+
+{
+    "linhaDigitavel" : "42297.11504 00001.954411 60020.034520 2 68610000054659"
+}
