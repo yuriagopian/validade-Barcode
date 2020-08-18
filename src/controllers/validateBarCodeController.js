@@ -1,6 +1,7 @@
-const clearMask = require('../utils/clearMask')
+const clearMask = require('../utils/clearMask');
 const moment = require('moment-timezone');
-const modulo10 = require('../utils/modulos')
+const modulo10 = require('../utils/modulos10');
+const modulo11 = require('../utils/modulo11');
 
 module.exports = {
     async validadeBarCode(req, res) {
@@ -57,9 +58,31 @@ module.exports = {
         const validarBlocos = false;
 
         const validBlocos = validarBlocos ? blocos.every(e => modulo10(e.num) === Number(e.DV)) : true;
-        // const validDV = boletoBancarioCodigoBarras(convertToBoletoBancarioCodigoBarras(cod));
+
+
+        const validDVModulo11 = barcode
+
+        const DV = barcode[4];
+        const bloco = barcode.substring(0, 4) + barcode.substring(5);
+        const modulo11IsValid = modulo11(bloco) === Number(DV);
+
+
+        let dvLinhaDigitavel = false;
+
+        if (modulo11IsValid == validBlocos) {
+            dvLinhaDigitavel = true
+        }
+
         console.log(validBlocos)
+        console.log(DV, bloco, dvLinhaDigitavel)
         // && validDV;
+
+        res.json({
+            linhaDigitavelIsValid: dvLinhaDigitavel,
+            valor: `R$ ${valorFinal}`,
+            dataVencimento: data,
+            barcode: barcode
+        })
 
     }
 }
