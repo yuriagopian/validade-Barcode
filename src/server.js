@@ -1,10 +1,5 @@
-const express = require('express');
-const routes = require('./routes');
+const app = require('./app');
+const express = require('express')
 
-const app = express();
-
-app.use(express.json());
-
-app.use(routes)
-
+app.use('/validateBardoc/doc', express.static('src/apidoc'))
 app.listen(3333)
