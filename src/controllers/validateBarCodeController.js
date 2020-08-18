@@ -1,16 +1,11 @@
 const clearMask = require('../utils/clearMask')
+const moment = require('moment-timezone');
+const modulo10 = require('../utils/modulos')
 
 module.exports = {
-    /**
-     * 
-     * @param {*} req 
-     * @param {*} res 
-     */
     async validadeBarCode(req, res) {
-        /**
-         * {string} linhadigitavel
-         * se refere a linha digitavel destinada na requisição
-         */
+
+        // se refere a linha digitavel destinada na requisição
         const { linhaDigitavel } = req.body
 
         // pega linha digitavel enviado por parametro e tira caracteres especiais
@@ -31,23 +26,18 @@ module.exports = {
         let valorFinal;
         valorBoleto = codigo.substr(37);
         valorFinal = valorBoleto.substr(0, 8) + '.' + valorBoleto.substr(8, 2);
+        valorFinal = Number(valorFinal).toString();
 
-        console.log(valorFinal)
+        const data = dataLinhaCodigo(codigo)
+        console.log("linha digitavel tamanho: ", codigo.length)
+        console.log("linha digitavel:", codigo)
+        console.log("valor do boleto: R$", valorFinal)
+        console.log("data de vencimento: ", data)
 
-        // let char = valorFinal.substr(1, 1);
 
-        // let codigoBarras =
-        //     linhaDigitavel.substr(0, 4) +
-        //     linhaDigitavel.substr(32, 15) +
-        //     linhaDigitavel.substr(4, 5) +
-        //     linhaDigitavel.substr(10, 10) +
-        //     linhaDigitavel.substr(21, 10);
-
-        // let blocos = [];
-
-        // blocos[0] = linhaDigitavel.substr(0, 10);
-        // blocos[1] = linhaDigitavel.substr(10, 11);
-        // blocos[2] = linhaDigitavel.substr(21, 11);
+        const barcode = linhaDigitavelToBarCode(codigo);
+        console.log("código de barras: ", barcode)
+        console.log("tamanho barcode: ", barcode.length)
 
         const blocos = [
             {
@@ -64,7 +54,12 @@ module.exports = {
             },
         ];
 
+        const validarBlocos = false;
 
+        const validBlocos = validarBlocos ? blocos.every(e => modulo10(e.num) === Number(e.DV)) : true;
+        // const validDV = boletoBancarioCodigoBarras(convertToBoletoBancarioCodigoBarras(cod));
+        console.log(validBlocos)
+        // && validDV;
 
     }
 }
@@ -82,3 +77,71 @@ function identificarTipoCodigo(codigo) {
         return 'TAMANHO_INCORRETO';
     }
 }
+
+// calcula a data de vencimento baseada no data fator adicionando os dias
+function dataLinhaCodigo(codigo) {
+
+    codigo = codigo.replace(/[^0-9]/g, '');
+
+    let fatorData = '';
+    // data inicial
+    let dataBoleto = moment.tz("1997-10-07 20:54:59.000Z", "UTC");
+    fatorData = codigo.substr(33, 4);
+    console.log("fator data:", fatorData)
+    const date = new Date()
+    if (date > moment.tz("2025-02-21 23:59:59.000Z", "UTC")) {
+        dataBoleto = moment.tz("2025-02-22 00:00:00.000Z", "UTC")
+        dataBoleto.add(Number(fatorData), 'days');
+        return dataBoleto.toDate();
+    }
+
+    dataBoleto.add(Number(fatorData), 'days');
+    return dataBoleto.toDate();
+}
+
+
+function linhaDigitavelToBarCode(codigo) {
+    codigo = codigo.replace(/[^0-9]/g, '');
+
+    let resultado = '';
+
+    resultado =
+        codigo.substr(0, 4) +
+        codigo.substr(32, 15) +
+        codigo.substr(4, 5) +
+        codigo.substr(10, 10) +
+        codigo.substr(21, 10);
+
+    return resultado;
+}
+
+
+// function calcVerificadorBarras(codigobara) {
+
+//     //Substitui 5º digito por zero, para evitar erros
+//     // 23791835000000020003381260036171007100006330
+//     let fatores = [4, 3, 2, 9, 0, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+//     const arraynumBarras = codigobara.slice(0,codigobara.length); 
+//     console.log(arraynumBarras)
+//     //let arraynumBarras = [2, 3, 7, 9, 0, 8, 3, 5, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 3, 3, 8, 1, 2, 6, 0, 0, 3, 6, 1, 7, 1, 0, 0, 7, 1, 0, 0, 0, 0, 6, 3, 3, 0]
+//     let soma = 0
+//     //Multiplicando e somando
+//     for (i = 0; i < fatores.length; i++) {
+//         soma += arraynumBarras[i] * fatores[i];
+//     }
+//     let mod = soma % 11; //Pegando resto da divisão
+//     let resultado = 11 - mod;
+//     return resultado;
+// }
+
+//  function modulo10(bloco) {
+//     const codigo = bloco.split('').reverse();
+//     const somatorio = codigo.reduce((acc, current, index) => {
+//       let soma = Number(current) * (((index + 1) % 2) + 1);
+//       soma = (soma > 9 ? Math.trunc(soma / 10) + (soma % 10) : soma);
+//       return acc + soma;
+//     }, 0);
+//     return (Math.ceil(somatorio / 10) * 10) - somatorio;
+//   }
+
+
